@@ -1,0 +1,24 @@
+{
+    "name": "mqtt-poolcontroller-bridge",
+    "version": "0.0.1",
+    "description": "Bridge poolcontroller via sockets to and from MQTT",
+    "license": "MIT",
+    "main": "mqtt-poolcontroller-bridge.js",
+    "repository": {
+        "url": "https://github.com/terafin/mqtt-poolcontroller-bridge"
+    },
+    "scripts": {
+        "start": "node mqtt-poolcontroller-bridge.js"
+    },
+    "dependencies": {
+        "homeautomation-js-lib": "git://github.com/terafin/homeautomation-js-lib.git",
+        "lodash": "^4.17.4",
+        "mqtt": "^2.15.0",
+        "socket.io": "^2.0.4",
+        "socket.io-client": "^2.0.4",
+        "repeat": "0.0.6"
+    },
+    "engines": {
+        "node": ">=4"
+    }
+}

@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/mqtt-poolcontroller-bridge.js",
+            "outputCapture": "std",
+            "env": {
+                "TOPIC_PREFIX": "/pool-test",
+                "MQTT_HOST": "mqtt://10.0.1.10",
+                "POOL_HOST": "http://10.0.90.183:3000",
+                "LOGGING_NAME": "mqtt-poolcontroller-bridge"
+            }
+        }
+    ]
+}
