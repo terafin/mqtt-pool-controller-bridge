@@ -72,6 +72,12 @@ socket.on('circuit', (circuitUpdate) => {
 })
 socket.on('pump', (pumps) => {
     logging.info('found pumps: ' + JSON.stringify(pumps))
+    Object.keys(pumps).forEach(pumpIndex => {
+        const pumpInfo = pumps[pumpIndex]
+        logging.info('pump ' + pumpIndex + ' info: ' + JSON.stringify(pumpInfo))
+        const power = pumpInfo['power']
+        publishUpdate('pump', pumpIndex, power)
+    })
 })
 socket.on('chlorinator', (chlorinator) => {
     logging.info('found chlorinator: ' + JSON.stringify(chlorinator))
