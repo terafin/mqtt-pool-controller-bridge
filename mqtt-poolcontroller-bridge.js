@@ -12,6 +12,19 @@ require('homeautomation-js-lib/mqtt_helpers.js')
 var pool_topic = process.env.TOPIC_PREFIX
 var poolHost = process.env.POOL_HOST
 
+var mqttOptions = {}
+
+var shouldRetain = process.env.MQTT_RETAIN
+
+if (_.isNil(shouldRetain)) {
+    shouldRetain = false
+}
+
+if (!_.isNil(shouldRetain)) {
+    mqttOptions['retain'] = shouldRetain
+}
+
+
 var circuits = {}
 
 // Setup MQTT
@@ -48,7 +61,7 @@ function publishUpdate(category, index, value) {
     if ( !_.isNil(index))
         topic = topic + '/' + index.toString()
 
-    client.smartPublish(topic, value.toString())
+    client.smartPublish(topic, value.toString(), mqttOptions)
 }
 
 
