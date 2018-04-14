@@ -12,7 +12,7 @@
             "outputCapture": "std",
             "env": {
                 "TOPIC_PREFIX": "/pool-test",
-                "MQTT_HOST": "mqtt://10.0.1.10",
+                "MQTT_HOST": "mqtt://mqtt.siliconspirit.net",
                 "POOL_HOST": "http://10.0.90.183:3000",
                 "LOGGING_NAME": "mqtt-poolcontroller-bridge"
             }

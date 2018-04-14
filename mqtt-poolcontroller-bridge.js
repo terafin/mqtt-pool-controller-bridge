@@ -72,29 +72,30 @@ socket.on('connect', () => {
 })
 
 socket.on('circuit', (circuitUpdate) => {
-    logging.info('found circuits: ' + JSON.stringify(circuitUpdate))
     circuits = circuitUpdate
 
     Object.keys(circuits).forEach(circuitIndex => {
         const circuitInfo = circuits[circuitIndex]
-        logging.info('info: ' + JSON.stringify(circuitInfo))
-        const status = circuitInfo['status']
-        publishUpdate('circuit', circuitIndex, status)
+        publishUpdate('circuit', circuitIndex, circuitInfo['status'])
     })
 
 })
 socket.on('pump', (pumps) => {
-    logging.info('found pumps: ' + JSON.stringify(pumps))
     Object.keys(pumps).forEach(pumpIndex => {
         const pumpInfo = pumps[pumpIndex]
-        logging.info('pump ' + pumpIndex + ' info: ' + JSON.stringify(pumpInfo))
         const power = pumpInfo['power']
         publishUpdate('pump', pumpIndex, power)
     })
 })
 socket.on('chlorinator', (chlorinator) => {
     logging.info('found chlorinator: ' + JSON.stringify(chlorinator))
+    Object.keys(chlorinator).forEach(chlorinatorKey => {
+        publishUpdate('chlorinator', chlorinatorKey, chlorinator[chlorinatorKey])
+    })
 })
 socket.on('temperatures', (temperatures) => {
     logging.info('found temperatures: ' + JSON.stringify(temperatures))
+    Object.keys(temperatures).forEach(temperature => {
+        publishUpdate('temperature', temperature, temperatures[temperature])
+    })
 })
