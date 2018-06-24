@@ -63,16 +63,6 @@ client.on('message', (topic, message) => {
         } else if ( action.includes('mode')) {
             socket.emit('poolheatmode', message.toString())
         }
-
-        Object.keys(circuits).forEach(circuitIndex => {
-            if ( circuitIndex == circuit ) {
-                const circuitInfo = circuits[circuitIndex]
-                const status = circuitInfo['status']
-                if ( status != message ) {
-                    socket.emit('toggleCircuit', circuitIndex)
-                }
-            }
-        })
     }
 })
 
