@@ -58,9 +58,9 @@ client.on('message', (topic, message) => {
         logging.info(' set heat action: ' + action + '   to: ' + message)
 
         
-        if ( action().includes('setpoint')) {
+        if ( action.includes('setpoint')) {
             socket.emit('setPoolSetPoint', message.toString())
-        } else if ( action().includes('mode')) {
+        } else if ( action.includes('mode')) {
             socket.emit('poolheatmode', message.toString())
         }
 
