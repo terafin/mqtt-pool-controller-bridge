@@ -30,6 +30,7 @@ var circuits = {}
 // Setup MQTT
 const client = mqtt.setupClient(function() {
     client.subscribe(pool_topic + '/circuit/+/set')
+    client.subscribe(pool_topic + '/poolheat/+/set')
 }, null)
 
 
@@ -41,6 +42,28 @@ client.on('message', (topic, message) => {
         logging.info(' set circuit: ' + circuit + '   to: ' + message)
 
         
+        Object.keys(circuits).forEach(circuitIndex => {
+            if ( circuitIndex == circuit ) {
+                const circuitInfo = circuits[circuitIndex]
+                const status = circuitInfo['status']
+                if ( status != message ) {
+                    socket.emit('toggleCircuit', circuitIndex)
+                }
+            }
+        })
+    }
+    else if ( topic.toString().includes('poolheat')) {
+        const components = topic.split('/')
+        const action = components[components.length - 2]
+        logging.info(' set heat action: ' + action + '   to: ' + message)
+
+        
+        if ( action().includes('setpoint')) {
+            socket.emit('setPoolSetPoint', message.toString())
+        } else if ( action().includes('mode')) {
+            socket.emit('poolheatmode', message.toString())
+        }
+
         Object.keys(circuits).forEach(circuitIndex => {
             if ( circuitIndex == circuit ) {
                 const circuitInfo = circuits[circuitIndex]
