@@ -3,8 +3,7 @@ const mqtt = require('mqtt')
 const _ = require('lodash')
 const logging = require('homeautomation-js-lib/logging.js')
 const io = require('socket.io-client')
-
-require('homeautomation-js-lib/mqtt_helpers.js')
+const mqtt_helpers = require('homeautomation-js-lib/mqtt_helpers.js')
 
 // Config
 var pool_topic = process.env.TOPIC_PREFIX
@@ -26,7 +25,7 @@ if (!_.isNil(shouldRetain)) {
 var circuits = {}
 
 // Setup MQTT
-const client = mqtt.setupClient(function() {
+const client = mqtt_helpers.setupClient(function() {
 	client.subscribe(pool_topic + '/circuit/+/set')
 	client.subscribe(pool_topic + '/poolheat/+/set')
 }, null)
