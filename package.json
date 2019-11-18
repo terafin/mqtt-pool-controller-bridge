@@ -11,8 +11,8 @@
         "start": "node mqtt-poolcontroller-bridge.js"
     },
     "dependencies": {
-        "homeautomation-js-lib": "git+https://gitlab.siliconspirit.net/home/homeautomation-js-lib.git",
-        "lodash": "^4.17.13",
+        "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
+        "lodash": "latest",
         "mqtt": "latest",
         "socket.io-client": "latest"
     },
