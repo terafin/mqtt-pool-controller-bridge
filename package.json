@@ -1,22 +1,26 @@
 {
-    "name": "mqtt-poolcontroller-bridge",
-    "version": "0.0.1",
-    "description": "Bridge poolcontroller via sockets to and from MQTT",
-    "license": "MIT",
-    "main": "mqtt-poolcontroller-bridge.js",
-    "repository": {
-        "url": "https://github.com/terafin/mqtt-poolcontroller-bridge"
-    },
-    "scripts": {
-        "start": "node mqtt-poolcontroller-bridge.js"
-    },
-    "dependencies": {
-        "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
-        "lodash": "latest",
-        "mqtt": "latest",
-        "socket.io-client": "latest"
-    },
-    "engines": {
-        "node": ">=4"
-    }
+  "name": "mqtt-poolcontroller-bridge",
+  "version": "0.0.1",
+  "description": "Bridge poolcontroller via sockets to and from MQTT",
+  "license": "MIT",
+  "main": "mqtt-poolcontroller-bridge.js",
+  "repository": {
+    "url": "https://github.com/terafin/mqtt-poolcontroller-bridge"
+  },
+  "scripts": {
+    "start": "node mqtt-poolcontroller-bridge.js",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
+  },
+  "dependencies": {
+    "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
+    "lodash": "latest",
+    "mqtt": "latest",
+    "socket.io-client": "latest",
+    "snyk": "^1.316.1"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "snyk": true
 }
