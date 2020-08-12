@@ -1,4 +1,4 @@
-FROM node:7
+FROM node:lts
 
 RUN mkdir -p /usr/node_app
 COPY . /usr/node_app
