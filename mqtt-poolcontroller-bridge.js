@@ -95,6 +95,49 @@ const publishUpdate = function(category, index, value) {
     client.smartPublish(topic, value.toString(), mqttOptions)
 }
 
+
+var running_average_map = {}
+const max_length_for_average = 10
+
+const add_running_average = function(key, value) {
+    var values = running_average_map[key]
+    if (_.isNil(values)) {
+        values = []
+    }
+
+    values.push(value)
+
+    if (values.length > max_length_for_average) {
+        values.shift()
+    }
+
+    running_average_map[key] = values
+}
+
+const running_average = function(key) {
+    var values = running_average_map[key]
+    if (_.isNil(values)) {
+        return 0
+    }
+    var average = 0
+
+    values.forEach(value => {
+        average += value
+
+    })
+
+    return average / values.length
+}
+
+const publish_running_average = function(topic, key, value) {
+    if (!_.isNil(value)) {
+        add_running_average(key, value)
+        const average = running_average(key)
+        logging.debug('' + key + ': ' + value)
+        logging.debug('  => average: ' + average)
+        client.smartPublish(mqtt_helpers.generateTopic(topic, key), average.toString(), mqttOptions)
+    }
+}
 const cleanupCollection = function(collection) {
     if (_.isNil(collection)) {
         return {}
@@ -146,7 +189,8 @@ socket.on('circuit', (circuitUpdate) => {
 socket.on('body', (body) => {
     try {
         logging.info('body: ' + JSON.stringify(body))
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id), cleanupCollection(body), ['heatMode', 'heatStatus', 'heaterOptions'], mqttOptions)
+        publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'body', body.id), 'temp', body.temp)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id), cleanupCollection(body), ['temp', 'heatMode', 'heatStatus', 'heaterOptions'], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id, 'heat_mode'), cleanupCollection(body.heatMode), [], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id, 'heat_status'), cleanupCollection(body.heatStatus), [], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id, 'heater_options'), cleanupCollection(body.heaterOptions), [], mqttOptions)
@@ -192,8 +236,12 @@ socket.on('chlorinator', (chlorinator) => {
 socket.on('temps', (temperatures) => {
     try {
         logging.info('found temperatures: ' + JSON.stringify(temperatures))
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'temperature'), temperatures, ['units', 'bodies'], mqttOptions)
+
+        publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'temperature'), 'waterSensor1', temperatures.waterSensor1)
+        publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'temperature'), 'air', temperatures.air)
+
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'temperature'), temperatures, ['air', 'waterSensor1', 'units', 'bodies'], mqttOptions)
     } catch (e) {
-        logging.error('failed temperature update' + e.message)
+        logging.error('failed temperature update: ' + e.message)
     }
 })
