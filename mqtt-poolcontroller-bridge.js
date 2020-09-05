@@ -97,7 +97,7 @@ const publishUpdate = function(category, index, value) {
 
 
 var running_average_map = {}
-const max_length_for_average = 10
+const max_length_for_average = 40
 
 const add_running_average = function(key, value) {
     var values = running_average_map[key]
