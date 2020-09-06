@@ -97,7 +97,9 @@ const publishUpdate = function(category, index, value) {
 
 
 var running_average_map = {}
-const max_length_for_average = 40
+const VALUES_FOR_RUNNING_AVERAGE = 5
+const MIN_VALUES_FOR_RUNNING_AVERAGE_THRESHOLD = 3
+const THRESHOLD_TO_THROW_AWAY = 6
 
 const add_running_average = function(key, value) {
     var values = running_average_map[key]
@@ -105,13 +107,18 @@ const add_running_average = function(key, value) {
         values = []
     }
 
-    values.push(value)
+    const current_average = running_average(key)
 
-    if (values.length > max_length_for_average) {
-        values.shift()
+    if (values.length < MIN_VALUES_FOR_RUNNING_AVERAGE_THRESHOLD || Math.abs(current_average - value) <= THRESHOLD_TO_THROW_AWAY) {
+        values.push(value)
+
+        if (values.length > VALUES_FOR_RUNNING_AVERAGE) {
+            values.shift()
+        }
+        running_average_map[key] = values
+    } else {
+        logging.error('throwing away value: ' + value + '   current average: ' + current_average)
     }
-
-    running_average_map[key] = values
 }
 
 const running_average = function(key) {
@@ -126,7 +133,7 @@ const running_average = function(key) {
 
     })
 
-    return average / values.length
+    return (average / values.length).toFixed(2)
 }
 
 const publish_running_average = function(topic, key, value) {
