@@ -36,8 +36,6 @@ const client = mqtt_helpers.setupClient(function() {
     })
 }, null)
 
-
-
 async function send_command(command, inputJSON) {
     const url = poolHost + command
     logging.info('pool request url: ' + url + '   body: ' + JSON.stringify(inputJSON))
