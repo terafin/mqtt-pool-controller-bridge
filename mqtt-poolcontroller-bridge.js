@@ -147,7 +147,7 @@ const cleanupCollection = function(collection) {
     return fixed
 }
 
-const socket = io(poolHost)
+const socket = io.connect(poolHost)
 
 socket.on('connect', () => {
     logging.info('connected to pool host')
