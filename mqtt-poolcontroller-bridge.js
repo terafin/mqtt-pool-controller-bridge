@@ -1,5 +1,6 @@
 // Requirements
 const mqtt = require('mqtt')
+const interval = require('interval-promise')
 const _ = require('lodash')
 const logging = require('homeautomation-js-lib/logging.js')
 const io = require('socket.io-client')
@@ -51,6 +52,91 @@ async function send_command(command, inputJSON) {
     } catch (e) {
         logging.error('failed send_command: ' + e)
         error = e
+    }
+}
+
+async function send_query(query) {
+    const url = poolHost + query
+    logging.info('pool query url: ' + url)
+    var error = null
+    var body = null
+
+    // socket.emit(command, JSON.stringify(inputJSON))
+
+    try {
+        const response = await got.get(url)
+        body = response.body
+        logging.debug('response: ' + JSON.stringify(body))
+    } catch (e) {
+        logging.error('failed send_command: ' + e)
+        error = e
+    }
+
+    return body
+}
+
+
+async function query_status() {
+    const statusString = await send_query('/state/all')
+    const status = JSON.parse(statusString)
+        // logging.info('status: ' + statusString)
+
+    // Object.keys(status).forEach(key => {
+    // logging.info('key: ' + key)
+    // logging.info('value: ' + JSON.stringify(status[key]))
+    // });
+
+    const pumps = status.pumps
+    if (!_.isNil(pumps)) {
+        pumps.forEach(item => {
+            processPump(item)
+        });
+    }
+    const temps = status.temps
+    if (!_.isNil(temps)) {
+        processTemps(temps)
+        const bodies = temps.bodies
+        if (!_.isNil(bodies)) {
+            bodies.forEach(body => {
+                processBody(body)
+            });
+        }
+    }
+    const valves = status.valves
+    if (!_.isNil(valves)) {
+        valves.forEach(item => {
+            processValve(item)
+        });
+    }
+    const chlorinators = status.chlorinators
+    if (!_.isNil(chlorinators)) {
+        chlorinators.forEach(item => {
+            processChlorinator(item)
+        });
+    }
+    const circuits = status.circuits
+    if (!_.isNil(circuits)) {
+        circuits.forEach(item => {
+            processCircuit(item)
+        });
+    }
+    const heaters = status.heaters
+    if (!_.isNil(heaters)) {
+        heaters.forEach(item => {
+            //processHeater(item)
+        });
+    }
+    const features = status.features
+    if (!_.isNil(features)) {
+        features.forEach(item => {
+            //processFeature(item)
+        });
+    }
+    const lightGroups = status.lightGroups
+    if (!_.isNil(lightGroups)) {
+        lightGroups.forEach(item => {
+            processLightGroup(item)
+        });
     }
 }
 
@@ -149,25 +235,41 @@ const cleanupCollection = function(collection) {
 
 const socket = io.connect(poolHost)
 
+
+logging.info('Connecting to: ' + poolHost)
 socket.on('connect', () => {
     logging.info('connected to pool host')
 })
 
 socket.on('circuit', (circuitUpdate) => {
-    try {
-        logging.info('circuit: ' + JSON.stringify(circuitUpdate))
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id), cleanupCollection(circuitUpdate), ['type', 'lightingTheme'], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id, 'type'), cleanupCollection(circuitUpdate.type), [], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id, 'theme'), cleanupCollection(circuitUpdate.lightingTheme), [], mqttOptions)
-    } catch (e) {
-        logging.error('failed circuit update' + e.message)
-    }
+    processCircuit(circuitUpdate)
 })
 
 
 socket.on('body', (body) => {
+    processBody(body)
+})
+
+socket.on('lightGroup', (lightGroup) => {
+    processLightGroup(lightGroup)
+})
+
+socket.on('pump', (pump) => {
+    processPump(pump)
+})
+
+socket.on('chlorinator', (chlorinator) => {
+    processChlorinator(chlorinator)
+})
+
+socket.on('temps', (temperatures) => {
+    processTemps(temperatures)
+})
+
+
+const processBody = function(body) {
     try {
-        logging.info('body: ' + JSON.stringify(body))
+        logging.debug('body: ' + JSON.stringify(body))
         publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'body', body.id), 'temp', body.temp)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id), cleanupCollection(body), ['temp', 'heatMode', 'heatStatus', 'heaterOptions'], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'body', body.id, 'heat_mode'), cleanupCollection(body.heatMode), [], mqttOptions)
@@ -176,45 +278,34 @@ socket.on('body', (body) => {
     } catch (e) {
         logging.error('failed body update' + e.message)
     }
-})
+}
 
-socket.on('lightGroup', (lightGroup) => {
+const processCircuit = function(circuitUpdate) {
     try {
-        logging.info('lightGroup: ' + JSON.stringify(lightGroup))
+        logging.debug('circuit: ' + JSON.stringify(circuitUpdate))
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id), cleanupCollection(circuitUpdate), ['type', 'lightingTheme'], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id, 'type'), cleanupCollection(circuitUpdate.type), [], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'circuit', circuitUpdate.id, 'theme'), cleanupCollection(circuitUpdate.lightingTheme), [], mqttOptions)
+    } catch (e) {
+        logging.error('failed circuit update ' + e.message)
+    }
+}
+
+const processLightGroup = function(lightGroup) {
+    try {
+        logging.debug('lightGroup: ' + JSON.stringify(lightGroup))
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'light_group', lightGroup.id), cleanupCollection(lightGroup), ['action', 'lightingTheme', 'type'], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'light_group', lightGroup.id, 'action'), cleanupCollection(lightGroup.action), [], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'light_group', lightGroup.id, 'theme'), cleanupCollection(lightGroup.lightingTheme), [], mqttOptions)
         client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'light_group', lightGroup.id, 'type'), cleanupCollection(lightGroup.type), [], mqttOptions)
     } catch (e) {
-        logging.error('failed lightGroup update' + e.message)
+        logging.error('failed lightGroup update ' + e.message)
     }
-})
+}
 
-socket.on('pump', (pump) => {
+const processTemps = function(temperatures) {
     try {
-        logging.info('pump: ' + JSON.stringify(pump))
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id), cleanupCollection(pump), ['status', 'type'], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'type'), cleanupCollection(pump.type), [], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'status'), cleanupCollection(pump.status), [], mqttOptions)
-    } catch (e) {
-        logging.error('failed pump update' + e.message)
-    }
-})
-
-socket.on('chlorinator', (chlorinator) => {
-    try {
-        logging.info('found chlorinator: ' + JSON.stringify(chlorinator))
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id), cleanupCollection(chlorinator), ['status', 'type', 'body'], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id, 'type'), cleanupCollection(chlorinator.type), [], mqttOptions)
-        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id, 'status'), cleanupCollection(chlorinator.status), [], mqttOptions)
-    } catch (e) {
-        logging.error('failed chlorinator update : ' + e)
-    }
-})
-
-socket.on('temps', (temperatures) => {
-    try {
-        logging.info('found temperatures: ' + JSON.stringify(temperatures))
+        logging.debug('found temperatures: ' + JSON.stringify(temperatures))
 
         publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'temperature'), 'waterSensor1', temperatures.waterSensor1)
         publish_running_average(mqtt_helpers.generateTopic(pool_topic, 'temperature'), 'air', temperatures.air)
@@ -223,4 +314,50 @@ socket.on('temps', (temperatures) => {
     } catch (e) {
         logging.error('failed temperature update: ' + e.message)
     }
-})
+}
+
+const processPump = function(pump) {
+    try {
+        logging.debug('pump: ' + JSON.stringify(pump))
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id), cleanupCollection(pump), ['status', 'type'], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'type'), cleanupCollection(pump.type), [], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'status'), cleanupCollection(pump.status), [], mqttOptions)
+    } catch (e) {
+        logging.error('failed pump update ' + e.message)
+    }
+}
+
+const processValve = function(valve) {
+    try {
+        logging.debug('valve: ' + JSON.stringify(valve))
+            // client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id), cleanupCollection(pump), ['status', 'type'], mqttOptions)
+            // client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'type'), cleanupCollection(pump.type), [], mqttOptions)
+            // client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'status'), cleanupCollection(pump.status), [], mqttOptions)
+    } catch (e) {
+        logging.error('failed valve update ' + e.message)
+    }
+}
+
+const processChlorinator = function(chlorinator) {
+    try {
+        logging.debug('found chlorinator: ' + JSON.stringify(chlorinator))
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id), cleanupCollection(chlorinator), ['status', 'type', 'body'], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id, 'type'), cleanupCollection(chlorinator.type), [], mqttOptions)
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chlorinator', chlorinator.id, 'status'), cleanupCollection(chlorinator.status), [], mqttOptions)
+    } catch (e) {
+        logging.error('failed chlorinator update : ' + e)
+    }
+}
+
+
+const startHostCheck = function() {
+    if (!_.isNil(poolHost)) {
+        logging.info('Starting to monitor host: ' + poolHost)
+    }
+    interval(async() => {
+        query_status()
+    }, 2 * 1000)
+    query_status()
+}
+
+startHostCheck()

@@ -15,6 +15,7 @@
         "lodash": "latest",
         "mqtt": "latest",
         "got": "latest",
+        "interval-promise": "latest",
         "socket.io-client": "latest"
     },
     "engines": {
