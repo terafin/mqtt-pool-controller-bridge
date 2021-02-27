@@ -8,7 +8,8 @@ const mqtt_helpers = require('homeautomation-js-lib/mqtt_helpers.js')
 const utilities = require('homeautomation-js-lib/utilities.js')
 const got = require('got')
 
-// Config
+const POLL_INTERVAL = 2
+    // Config
 var pool_topic = process.env.TOPIC_PREFIX
 var poolHost = process.env.POOL_HOST
 
@@ -181,10 +182,10 @@ const publishUpdate = function(category, index, value) {
 }
 
 
-const VALUES_FOR_RUNNING_AVERAGE = 10
+const VALUES_FOR_RUNNING_AVERAGE = (60 / POLL_INTERVAL)
 const MIN_VALUES_FOR_RUNNING_AVERAGE_THRESHOLD = 3
 const THRESHOLD_TO_THROW_AWAY = 6
-const MAX_VALUES_TO_THROW_AWAY = 2
+const MAX_VALUES_TO_THROW_AWAY = 2 * (10 / POLL_INTERVAL)
 
 const average_options = {
     values_for_running_average: VALUES_FOR_RUNNING_AVERAGE,
@@ -197,9 +198,11 @@ const average_options = {
 const publish_running_average = function(topic, key, value) {
     if (!_.isNil(value)) {
         utilities.add_running_average(key, value, average_options)
-        const average = utilities.running_average(key)
-        logging.debug('' + key + ': ' + value)
-        logging.debug('  => average: ' + average)
+        var average = utilities.running_average(key)
+        logging.info('' + key + ': ' + value)
+        logging.info('  => average: ' + average)
+        average = Math.round(average)
+        logging.info('  => rounded: ' + average)
         client.smartPublish(mqtt_helpers.generateTopic(topic, key), average.toString(), mqttOptions)
     }
 }
@@ -233,56 +236,56 @@ const cleanupCollection = function(collection) {
     return fixed
 }
 
-const socket = io(poolHost)
-logging.info('Connecting to: ' + poolHost)
+// const socket = io(poolHost)
+// logging.info('Connecting to: ' + poolHost)
 
-socket.on('connect', () => {
-    logging.info('connected to pool host')
-})
+// socket.on('connect', () => {
+//     logging.info('connected to pool host')
+// })
 
-socket.on('connect_error', function(data) {
-    logging.info('connection error: ' + data);
-})
-socket.on('connect_timeout', function(data) {
-    logging.info('connection timeout: ' + data);
-})
-socket.on('reconnect', function(data) {
-    logging.info('reconnect: ' + data);
-})
-socket.on('reconnect_attempt', function(data) {
-    logging.info('reconnect attempt: ' + data);
-})
-socket.on('reconnecting', function(data) {
-    logging.info('reconnecting: ' + data);
-})
-socket.on('reconnect_failed', function(data) {
-    logging.info('reconnect failed: ' + data);
-})
+// socket.on('connect_error', function(data) {
+//     logging.info('connection error: ' + data);
+// })
+// socket.on('connect_timeout', function(data) {
+//     logging.info('connection timeout: ' + data);
+// })
+// socket.on('reconnect', function(data) {
+//     logging.info('reconnect: ' + data);
+// })
+// socket.on('reconnect_attempt', function(data) {
+//     logging.info('reconnect attempt: ' + data);
+// })
+// socket.on('reconnecting', function(data) {
+//     logging.info('reconnecting: ' + data);
+// })
+// socket.on('reconnect_failed', function(data) {
+//     logging.info('reconnect failed: ' + data);
+// })
 
-socket.on('circuit', (circuitUpdate) => {
-    processCircuit(circuitUpdate)
-})
+// socket.on('circuit', (circuitUpdate) => {
+//     processCircuit(circuitUpdate)
+// })
 
 
-socket.on('body', (body) => {
-    processBody(body)
-})
+// socket.on('body', (body) => {
+//     processBody(body)
+// })
 
-socket.on('lightGroup', (lightGroup) => {
-    processLightGroup(lightGroup)
-})
+// socket.on('lightGroup', (lightGroup) => {
+//     processLightGroup(lightGroup)
+// })
 
-socket.on('pump', (pump) => {
-    processPump(pump)
-})
+// socket.on('pump', (pump) => {
+//     processPump(pump)
+// })
 
-socket.on('chlorinator', (chlorinator) => {
-    processChlorinator(chlorinator)
-})
+// socket.on('chlorinator', (chlorinator) => {
+//     processChlorinator(chlorinator)
+// })
 
-socket.on('temps', (temperatures) => {
-    processTemps(temperatures)
-})
+// socket.on('temps', (temperatures) => {
+//     processTemps(temperatures)
+// })
 
 
 const processBody = function(body) {
@@ -374,7 +377,7 @@ const startHostCheck = function() {
     }
     interval(async() => {
         query_status()
-    }, 5 * 1000)
+    }, POLL_INTERVAL * 1000)
     query_status()
 }
 
