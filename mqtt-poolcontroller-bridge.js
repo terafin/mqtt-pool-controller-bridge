@@ -181,7 +181,7 @@ const publishUpdate = function(category, index, value) {
 }
 
 
-const VALUES_FOR_RUNNING_AVERAGE = 8
+const VALUES_FOR_RUNNING_AVERAGE = 10
 const MIN_VALUES_FOR_RUNNING_AVERAGE_THRESHOLD = 3
 const THRESHOLD_TO_THROW_AWAY = 6
 const MAX_VALUES_TO_THROW_AWAY = 2
@@ -233,12 +233,30 @@ const cleanupCollection = function(collection) {
     return fixed
 }
 
-const socket = io.connect(poolHost)
-
-
+const socket = io(poolHost)
 logging.info('Connecting to: ' + poolHost)
+
 socket.on('connect', () => {
     logging.info('connected to pool host')
+})
+
+socket.on('connect_error', function(data) {
+    logging.info('connection error: ' + data);
+})
+socket.on('connect_timeout', function(data) {
+    logging.info('connection timeout: ' + data);
+})
+socket.on('reconnect', function(data) {
+    logging.info('reconnect: ' + data);
+})
+socket.on('reconnect_attempt', function(data) {
+    logging.info('reconnect attempt: ' + data);
+})
+socket.on('reconnecting', function(data) {
+    logging.info('reconnecting: ' + data);
+})
+socket.on('reconnect_failed', function(data) {
+    logging.info('reconnect failed: ' + data);
 })
 
 socket.on('circuit', (circuitUpdate) => {
@@ -356,7 +374,7 @@ const startHostCheck = function() {
     }
     interval(async() => {
         query_status()
-    }, 2 * 1000)
+    }, 5 * 1000)
     query_status()
 }
 
