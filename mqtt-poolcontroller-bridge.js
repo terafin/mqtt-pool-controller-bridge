@@ -109,6 +109,12 @@ async function query_status() {
             processValve(item)
         });
     }
+    const chemControllers = status.chemControllers
+    if (!_.isNil(chemControllers)) {
+        chemControllers.forEach(item => {
+            processChemController(item)
+        });
+    }
     const chlorinators = status.chlorinators
     if (!_.isNil(chlorinators)) {
         chlorinators.forEach(item => {
@@ -356,6 +362,15 @@ const processValve = function(valve) {
             // client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'pump', pump.id, 'status'), cleanupCollection(pump.status), [], mqttOptions)
     } catch (e) {
         logging.error('failed valve update ' + e.message)
+    }
+}
+
+const processChemController = function(chemController) {
+    try {
+        logging.debug('found chemController: ' + JSON.stringify(chemController))
+        client.smartPublishCollection(mqtt_helpers.generateTopic(pool_topic, 'chemController', chemController.id), cleanupCollection(chemController), [], mqttOptions)
+    } catch (e) {
+        logging.error('failed chemController update : ' + e)
     }
 }
 
