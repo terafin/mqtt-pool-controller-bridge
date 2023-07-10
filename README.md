@@ -65,7 +65,7 @@ Here's an example docker compose
 version: "3.4"
 services:
     mqtt-pool-controller-bridge:
-        image: terafin/mqtt-pool-controller-bridge:latest
+        image: ghcr.io/terafin/mqtt-pool-controller-bridge:latest
         container_name: mqtt-pool-controller-bridge
         environment:
             LOGGING_NAME: mqtt-pool-controller-bridge
